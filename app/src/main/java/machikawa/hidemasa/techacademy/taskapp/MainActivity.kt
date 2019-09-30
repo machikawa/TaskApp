@@ -15,6 +15,7 @@ import io.realm.RealmChangeListener
 import io.realm.Sort
 
 const val EXTRA_TASK = "machikawa.hidemasa.techacademy.taskapp.TASK"
+const val PUSH_TASK = "machikawa.hidemasa.techacademy.taskapp.TASK" // プッシュ経由でのタスクを設定するEXTRA
 
 class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener {
 

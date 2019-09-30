@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import io.realm.Realm
 import kotlinx.android.synthetic.main.content_input.*
@@ -23,6 +24,7 @@ class InputActivity : AppCompatActivity() {
     private var mMinute = 0
     private var mTask: Task? = null
 
+    // date picker listner
     private val mOnDateClickListener = View.OnClickListener {
         val datePickerDialog = DatePickerDialog(this,
             DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
@@ -35,6 +37,7 @@ class InputActivity : AppCompatActivity() {
         datePickerDialog.show()
     }
 
+    // time picker listner
     private val mOnTimeClickListener = View.OnClickListener {
         val timePickerDialog = TimePickerDialog(this,
             TimePickerDialog.OnTimeSetListener { _, hour, minute ->
@@ -104,6 +107,7 @@ class InputActivity : AppCompatActivity() {
         }
     }
 
+    // タスク追加時の処理
     private fun addTask(){
         val realm = Realm.getDefaultInstance()
         realm.beginTransaction()

@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -44,13 +45,15 @@ class TaskAlarmReceiver: BroadcastReceiver() {
 
         // タスクの情報を設定する
         builder.setTicker(task!!.title)   // 5.0以降は表示されない
-        builder.setContentTitle(task.title)
+        builder.setContentTitle(task.title + " の開始時間です！詳しくはタップ！")
         builder.setContentText(task.contents)
 
-        // 通知をタップしたらアプリを起動
-        var startAppIntent = Intent(context,  MainActivity::class.java)
-        startAppIntent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT)
-        val pendingIntent = PendingIntent.getActivity(context,0,startAppIntent,0)
+        // 通知をタップしたらアプリを起動 - タスクの編集画面へいく
+        var uri:Uri = Uri.parse("machiapp://taskdetail")
+        var pushedIntent = Intent(Intent.ACTION_VIEW,uri)
+        pushedIntent.putExtra(PUSH_TASK,taskId)
+        pushedIntent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT)
+        val pendingIntent = PendingIntent.getActivity(context,0,pushedIntent,PendingIntent.FLAG_UPDATE_CURRENT)
         builder.setContentIntent(pendingIntent)
 
         // 通知の表示
