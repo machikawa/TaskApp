@@ -4,24 +4,19 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
-import android.view.Menu
 import android.widget.SearchView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import io.realm.Case
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_main.*
 import io.realm.RealmChangeListener
 import io.realm.Sort
-import java.util.*
 
 const val EXTRA_TASK = "machikawa.hidemasa.techacademy.taskapp.TASK"
 
 class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener {
-
-    private lateinit var searchv:SearchView
 
     private lateinit var mRealm: Realm
     private lateinit var mTaskAdapter: TaskAdapter
@@ -30,11 +25,14 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener {
             reloadListView()
         }
     }
+    // 検索機能の追加に伴い
+    private lateinit var searchv:SearchView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // タスク生成プラスボタンのリスナー
         fab.setOnClickListener { view ->
             val intent = Intent(this@MainActivity,InputActivity::class.java)
             startActivity(intent)
@@ -43,15 +41,6 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener {
         // Realm を生成
         mRealm = Realm.getDefaultInstance()
         mRealm.addChangeListener(mRealmListener)
-
-        // 検索機能の追加 //
-        // サーチビューの取得
-        searchv = findViewById(R.id.searchv) as SearchView
-        // 検索バー常時配置
-        searchv.isSubmitButtonEnabled = true
-        searchv.setIconifiedByDefault(false)
-        // リスナーの登録
-        searchv.setOnQueryTextListener(this)
 
         // ListView の設定
         mTaskAdapter = TaskAdapter(this@MainActivity)
@@ -101,6 +90,15 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener {
             true
         }
         reloadListView()
+
+        // 検索機能の追加に伴い //
+        // サーチビューの取得
+        searchv = findViewById(R.id.searchv) as SearchView
+        // 検索バー常時配置
+        searchv.setIconifiedByDefault(true)
+        searchv.isSubmitButtonEnabled = true
+        // リスナーの登録
+        searchv.setOnQueryTextListener(this)
     }
 
     // レルムからデータ全取り
@@ -122,18 +120,23 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener {
 
     // Query Text の変更時にアクティブに動作
     override fun onQueryTextChange(newText: String?): Boolean {
-        return false
+        // 文字が全部消されたら全タスク表示。それ以外は Query をサブミットした時と同じ動作
+        if (newText?.length == 0) {
+            reloadListView()
+        } else {
+            onQueryTextSubmit(newText)
+        }
+        return true
     }
 
-    // submit ボタンを押した時にアクティブに動作
+    // submit ボタンを押した時にアクティブに動作.　大文字小文字は区別しない
     override fun onQueryTextSubmit(query: String?): Boolean {
         // 画面で受け取った文字列を元にカテゴリーを検索
-        val taskRealmSearchResults = mRealm.where(Task::class.java).contains("categoryName",query).findAll().sort("date",Sort.DESCENDING)
+        val taskRealmSearchResults = mRealm.where(Task::class.java).contains("categoryName",query,Case.INSENSITIVE).findAll().sort("date",Sort.DESCENDING)
 
         mTaskAdapter.taskList = mRealm.copyFromRealm(taskRealmSearchResults)
         listView1.adapter = mTaskAdapter
         mTaskAdapter.notifyDataSetChanged()
         return false
     }
-
 }
