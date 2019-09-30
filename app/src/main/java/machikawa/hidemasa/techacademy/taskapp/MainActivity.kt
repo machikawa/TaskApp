@@ -4,7 +4,11 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
+import android.view.Menu
+import android.widget.SearchView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import io.realm.Realm
@@ -15,7 +19,9 @@ import java.util.*
 
 const val EXTRA_TASK = "machikawa.hidemasa.techacademy.taskapp.TASK"
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener {
+
+    private lateinit var searchv:SearchView
 
     private lateinit var mRealm: Realm
     private lateinit var mTaskAdapter: TaskAdapter
@@ -38,6 +44,15 @@ class MainActivity : AppCompatActivity() {
         mRealm = Realm.getDefaultInstance()
         mRealm.addChangeListener(mRealmListener)
 
+        // 検索機能の追加 //
+        // サーチビューの取得
+        searchv = findViewById(R.id.searchv) as SearchView
+        // 検索バー常時配置
+        searchv.isSubmitButtonEnabled = true
+        searchv.setIconifiedByDefault(false)
+        // リスナーの登録
+        searchv.setOnQueryTextListener(this)
+
         // ListView の設定
         mTaskAdapter = TaskAdapter(this@MainActivity)
 
@@ -50,9 +65,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         // 長押しした時の処理
-            listView1.setOnItemLongClickListener { parent, view, position, id ->
+        listView1.setOnItemLongClickListener { parent, view, position, id ->
             val task = parent.adapter.getItem(position) as Task
-
             val builder = AlertDialog.Builder(this@MainActivity)
 
             builder.setTitle("削除")
@@ -89,13 +103,13 @@ class MainActivity : AppCompatActivity() {
         reloadListView()
     }
 
+    // レルムからデータ全取り
     private fun reloadListView() {
         // Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得
         val taskRealmResults = mRealm.where(Task::class.java).findAll().sort("date", Sort.DESCENDING)
 
         // 上記の結果を、TaskList としてセットする
         mTaskAdapter.taskList = mRealm.copyFromRealm(taskRealmResults)
-
         listView1.adapter = mTaskAdapter
 
         mTaskAdapter.notifyDataSetChanged()
@@ -105,4 +119,21 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         mRealm.close()
     }
+
+    // Query Text の変更時にアクティブに動作
+    override fun onQueryTextChange(newText: String?): Boolean {
+        return false
+    }
+
+    // submit ボタンを押した時にアクティブに動作
+    override fun onQueryTextSubmit(query: String?): Boolean {
+        // 画面で受け取った文字列を元にカテゴリーを検索
+        val taskRealmSearchResults = mRealm.where(Task::class.java).contains("categoryName",query).findAll().sort("date",Sort.DESCENDING)
+
+        mTaskAdapter.taskList = mRealm.copyFromRealm(taskRealmSearchResults)
+        listView1.adapter = mTaskAdapter
+        mTaskAdapter.notifyDataSetChanged()
+        return false
+    }
+
 }
